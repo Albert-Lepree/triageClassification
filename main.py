@@ -24,10 +24,10 @@ def main():
     #print(label_groups.count() / len(train))
 
     # display most common word from each document
-    #freq(train)
+    freq(train)
 
     # display most unique word from each document
-    #tfidf(train)
+    tfidf(train)
 
     # naive bayes model
     #nbMultipleRuns(train)
@@ -38,7 +38,7 @@ def main():
 
     # svm(train['Text'], dev['Text'], train['Label'], dev['Label'])
 
-    decisionTree(train['Text'], dev['Text'], train['Label'], dev['Label'])
+    # decisionTree(train['Text'], dev['Text'], train['Label'], dev['Label'])
 
 def freq(df):
     # changes encoding type to string?
@@ -149,6 +149,15 @@ def noSplitNB(X_train, X_test, y_train, y_test):
     accList.append(acc)
     print("accuracy is: ", acc*100)
 
+    cm = metrics.confusion_matrix(y_test, predicted)
+    print("confusion matrix: \n", cm)
+
+    disp = metrics.ConfusionMatrixDisplay(confusion_matrix=cm)
+
+    disp.plot()
+
+    plt.show()
+
 
 # support vector machine classifier
 def svm(Train_X, Test_X, Train_Y, Test_Y):
@@ -217,7 +226,7 @@ def decisionTree(Train_X, Test_X, Train_Y, Test_Y):
     plt.show()
 
     tree.plot_tree(clf)
-    plt.show()
+    plt.savefig('decisionTree.pdf')
 
 
 if __name__=='__main__':
