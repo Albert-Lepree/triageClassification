@@ -10,6 +10,8 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from sklearn.model_selection import train_test_split
 
 #from util import load_data, Classifier, Example, evaluate, remove_stop_words
+from sklearn.preprocessing import LabelEncoder
+
 
 def main():
     train = pd.read_csv("./data/triage/train.csv", sep='|')
@@ -28,9 +30,15 @@ def main():
     #tfidf(train)
 
     # naive bayes model
-    nbMultipleRuns(train)
+    #nbMultipleRuns(train)
 
-    #nb(train)
+    #nb(train, .4)
+
+    # noSplitNB(train['Text'], dev['Text'], train['Label'], dev['Label'])
+
+    # svm(train['Text'], dev['Text'], train['Label'], dev['Label'])
+
+    decisionTree(train['Text'], dev['Text'], train['Label'], dev['Label'])
 
 def freq(df):
     # changes encoding type to string?
@@ -60,10 +68,10 @@ def nb(df, testSize):
                                                         test_size=testSize,
                                                         random_state=7)
 
-    # print('Shape of X_train: ', X_train.dtype)
-    # print('Shape of X_test: ', X_test.shape)
-    # print('Shape of y_train: ', y_train.shape)
-    # print('Shape of y_test: ', y_test.shape)
+    print('Shape of X_train: ', X_train)
+    print('Shape of X_test: ', X_test)
+    print('Shape of y_train: ', y_train)
+    print('Shape of y_test: ', y_test)
 
     tfidf = TfidfVectorizer()
 
@@ -85,6 +93,7 @@ def nb(df, testSize):
     acc = metrics.accuracy_score(y_test, predicted)
     accList.append(acc)
     # print("accuracy is: ", acc*100)
+
 
 def nbMultipleRuns(df):
 
@@ -109,6 +118,107 @@ def graphData(testSizes):
 
     df.plot(x='Test Sizes', y = 'Accuracy', kind='line')
     plt.show()
+
+
+def noSplitNB(X_train, X_test, y_train, y_test):
+
+
+    # print('Shape of X_train: ', X_train.dtype)
+    # print('Shape of X_test: ', X_test.shape)
+    # print('Shape of y_train: ', y_train.shape)
+    # print('Shape of y_test: ', y_test.shape)
+
+    tfidf = TfidfVectorizer()
+
+    X_train_tfidf = tfidf.fit_transform(X_train.values.astype('U')).toarray()
+    # print('tfidf train shape: ', X_train_tfidf.shape)
+
+    X_test_tfidf = tfidf.transform(X_test.values.astype('U')).toarray()
+    # print('tfidf test shape: ', X_test_tfidf.shape)
+
+    # model
+    from sklearn.naive_bayes import MultinomialNB
+    clf = MultinomialNB()
+    clf.fit(X_train_tfidf, y_train)
+
+    # test results: predict data
+    predicted = clf.predict(X_test_tfidf)
+
+    from sklearn import metrics
+    acc = metrics.accuracy_score(y_test, predicted)
+    accList.append(acc)
+    print("accuracy is: ", acc*100)
+
+
+# support vector machine classifier
+def svm(Train_X, Test_X, Train_Y, Test_Y):
+    from sklearn import svm
+
+    Encoder = LabelEncoder()
+    Train_Y = Encoder.fit_transform(Train_Y)
+    Test_Y = Encoder.fit_transform(Test_Y)
+
+    Tfidf_vect = TfidfVectorizer()
+    Tfidf_vect.fit(Train_X.values.astype('U'))
+    Train_X_Tfidf = Tfidf_vect.transform(Train_X.values.astype('U'))
+    Test_X_Tfidf = Tfidf_vect.transform(Test_X.values.astype('U'))
+
+
+    ## Classifier - Algorithm - SVM
+    # fit the training dataset on the classifier
+    SVM = svm.SVC(C=1.0, kernel='linear', degree=2, gamma='auto')
+
+    SVM.fit(Train_X_Tfidf, Train_Y)
+
+    # predict the labels on validation dataset
+    predictions_SVM = SVM.predict(Test_X_Tfidf)
+
+
+    # Use accuracy_score function to get the accuracy
+    from sklearn import metrics
+    acc = metrics.accuracy_score(Test_Y, predictions_SVM)
+    print("accuracy is: ", acc*100)
+
+    cm = metrics.confusion_matrix(Test_Y, predictions_SVM)
+    print("confusion matrix: \n", cm)
+
+    disp = metrics.ConfusionMatrixDisplay(confusion_matrix=cm)
+
+    disp.plot()
+
+    plt.show()
+
+
+def decisionTree(Train_X, Test_X, Train_Y, Test_Y):
+    from sklearn import tree
+
+    tfidf = TfidfVectorizer()
+
+    X_train_tfidf = tfidf.fit_transform(Train_X.values.astype('U')).toarray()
+    # print('tfidf train shape: ', X_train_tfidf.shape)
+
+    X_test_tfidf = tfidf.transform(Test_X.values.astype('U')).toarray()
+    # print('tfidf test shape: ', X_test_tfidf.shape)
+
+    clf = tree.DecisionTreeClassifier()
+    clf = clf.fit(X_train_tfidf, Train_Y)
+
+    predicted = clf.predict(X_test_tfidf)
+
+    from sklearn import metrics
+    acc = metrics.accuracy_score(Test_Y, predicted)
+    print("accuracy is: ", acc*100)
+
+    cm = metrics.confusion_matrix(Test_Y, predicted)
+    print("confusion matrix: \n", cm)
+
+    disp = metrics.ConfusionMatrixDisplay(confusion_matrix=cm)
+    disp.plot()
+    plt.show()
+
+    tree.plot_tree(clf)
+    plt.show()
+
 
 if __name__=='__main__':
     main()
